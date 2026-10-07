@@ -25,8 +25,14 @@ internal class HelloWorldPage : Pager() {
     private val isCompleted: Boolean
         get() = clickCount >= targetCount
 
-    // 函数定义：把“次数加一”这项操作放在一起，调用时才执行。
+    // 点击时先检查是否完成，达到目标后不再增加次数。
     private fun incrementCount() {
+        // 普通 if 控制这次函数调用的执行流程；isCompleted 会按当前次数重新计算。
+        if (isCompleted) {
+            return // 提前结束 incrementCount()，本次不再执行下面的加一操作。
+        }
+
+        // 尚未完成才会走到这里。例如目标为 5，当前为 4 时，可以加到 5。
         clickCount += 1
     }
 
@@ -35,7 +41,7 @@ internal class HelloWorldPage : Pager() {
         clickCount = 0
     }
 
-    // 本节：用 targetCount 统一目标，用计算属性 isCompleted 统一完成判断。
+    // 本节：在操作函数中用 if 和 return 提前结束，达到目标后停止累加。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
@@ -74,7 +80,7 @@ internal class HelloWorldPage : Pager() {
                 // event 与 attr 并列：attr 设置组件属性，event 登记事件发生后要执行的代码。
                 event {
                     click {
-                        page.incrementCount() // 函数调用：点击后执行“次数加一”。
+                        page.incrementCount() // 函数内部先检查完成状态，未完成时才加一。
                     }
                 }
 
