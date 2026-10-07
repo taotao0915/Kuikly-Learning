@@ -3,6 +3,7 @@ package com.example.kuiklylearning.pages
 import com.tencent.kuikly.core.annotations.Page
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.directives.vif
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.handler.observable
 import com.tencent.kuikly.core.views.Text
@@ -25,16 +26,16 @@ internal class HelloWorldPage : Pager() {
         clickCount = 0
     }
 
-    // 本节：点击事件调用函数；attr 根据次数更新卡片颜色和完成提示。
+    // 本节：用 vif 根据点击次数创建或移除整个重置按钮。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
         return {
-            // 页面包含欢迎语、昵称卡片、计数文字和重置按钮。
+            // 页面包含欢迎语、昵称卡片、计数文字，以及完成后才显示的重置按钮。
             attr {
                 backgroundColor(Color.WHITE)
                 flexDirectionColumn() // 把页面中的组件从上往下排列。
-                allCenter() // 让整组内容在页面中水平、垂直居中。
+                allCenter() // 整组内容居中；按钮出现或移除后，会按新的总高度重新居中。
             }
 
             // 第一个组件：欢迎语。
@@ -104,27 +105,33 @@ internal class HelloWorldPage : Pager() {
                 }
             }
 
-            // 第四个组件：始终显示的重置按钮，由 View 和 Text 组成。
-            View {
-                attr {
-                    width(160f)
-                    height(48f)
-                    backgroundColor(Color.BLUE)
-                    allCenter() // 让按钮内的文字水平、竖直居中。
-                    marginTop(16f)
-                }
-
-                event {
-                    click {
-                        page.resetCount() // 函数调用：点击后执行“次数归零”。
-                    }
-                }
-
-                Text {
+            // 第四部分：达到 5 次才显示整个重置按钮。
+            // vif 的第一个代码块提供判断条件，第二个代码块负责创建按钮。
+            // 条件中直接读取 observable 状态，次数变化时 Kuikly 会重新判断。
+            vif({ page.clickCount >= 5 }) {
+                // 条件成立时创建 View；不成立时移除它，包括占用的布局空间。
+                View {
                     attr {
-                        text("重新开始")
-                        fontSize(18f)
-                        color(Color.WHITE)
+                        width(160f)
+                        height(48f)
+                        backgroundColor(Color.BLUE)
+                        allCenter() // 让按钮内的文字水平、竖直居中。
+                        marginTop(16f)
+                    }
+
+                    event {
+                        click {
+                            // 归零后，完成提示和绿色背景恢复，vif 的条件变为 false，按钮被移除。
+                            page.resetCount()
+                        }
+                    }
+
+                    Text {
+                        attr {
+                            text("重新开始")
+                            fontSize(18f)
+                            color(Color.WHITE)
+                        }
                     }
                 }
             }
