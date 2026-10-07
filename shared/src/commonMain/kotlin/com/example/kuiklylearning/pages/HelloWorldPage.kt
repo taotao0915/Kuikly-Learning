@@ -15,15 +15,25 @@ internal class HelloWorldPage : Pager() {
     // 页面状态：初始为 0。修改它后，读取它的响应式属性会更新。
     private var clickCount by observable(0)
 
-    // 本节：点击昵称卡片，修改状态，让下面的文字显示最新次数。
+    // 函数定义：把“次数加一”这项操作放在一起，调用时才执行。
+    private fun incrementCount() {
+        clickCount += 1
+    }
+
+    // 函数定义：把次数直接设为 0。计数文字会跟随状态更新。
+    private fun resetCount() {
+        clickCount = 0
+    }
+
+    // 本节：在点击事件中调用函数，分别完成计数和重置。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
         return {
-            // 页面的直接子组件是：欢迎语 Text、昵称 View、计数 Text。
+            // 页面包含欢迎语、昵称卡片、计数文字和重置按钮。
             attr {
                 backgroundColor(Color.WHITE)
-                flexDirectionColumn() // 把这三个组件从上往下排列。
+                flexDirectionColumn() // 把页面中的组件从上往下排列。
                 allCenter() // 让整组内容在页面中水平、垂直居中。
             }
 
@@ -53,7 +63,7 @@ internal class HelloWorldPage : Pager() {
                 // event 与 attr 并列：attr 设置组件属性，event 登记事件发生后要执行的代码。
                 event {
                     click {
-                        page.clickCount += 1 // 每收到一次点击事件，就把次数加一。
+                        page.incrementCount() // 函数调用：点击后执行“次数加一”。
                     }
                 }
 
@@ -84,6 +94,31 @@ internal class HelloWorldPage : Pager() {
                     fontSize(18f)
                     color(Color.BLACK)
                     marginTop(16f) // 计数文字与上方昵称容器的间距。
+                }
+            }
+
+            // 第四个组件：始终显示的重置按钮，由 View 和 Text 组成。
+            View {
+                attr {
+                    width(160f)
+                    height(48f)
+                    backgroundColor(Color.BLUE)
+                    allCenter() // 让按钮内的文字水平、竖直居中。
+                    marginTop(16f)
+                }
+
+                event {
+                    click {
+                        page.resetCount() // 函数调用：点击后执行“次数归零”。
+                    }
+                }
+
+                Text {
+                    attr {
+                        text("重新开始")
+                        fontSize(18f)
+                        color(Color.WHITE)
+                    }
                 }
             }
         }
