@@ -25,6 +25,14 @@ internal class HelloWorldPage : Pager() {
     private val isCompleted: Boolean
         get() = clickCount >= targetCount
 
+    // 进度条的总宽度，外层底条和内层填充共用这个值。
+    private val progressBarWidth = 280f
+
+    // 完成比例：目标次数保持为正整数。计数从 0 增加到目标，比例就从 0f 增加到 1f。
+    // 先转成 Float 再除：1 / 5 是整数 0，而 1.toFloat() / 5 约为 0.2。
+    private val progress: Float
+        get() = clickCount.toFloat() / targetCount
+
     // 点击时先检查是否完成，达到目标后不再增加次数。
     private fun incrementCount() {
         // 普通 if 控制这次函数调用的执行流程；isCompleted 会按当前次数重新计算。
@@ -36,17 +44,17 @@ internal class HelloWorldPage : Pager() {
         clickCount += 1
     }
 
-    // 函数定义：把次数直接设为 0。计数文字、完成提示和卡片颜色会跟随状态更新。
+    // 函数定义：把次数直接设为 0。计数文字、卡片颜色、进度条和按钮会跟随状态更新。
     private fun resetCount() {
         clickCount = 0
     }
 
-    // 本节：在操作函数中用 if 和 return 提前结束，达到目标后停止累加。
+    // 本节：用 Float 计算完成比例，在 attr 中让进度条宽度响应次数变化。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
         return {
-            // 页面包含欢迎语、昵称卡片、计数文字，以及完成后才显示的重置按钮。
+            // 页面包含欢迎语、昵称卡片、计数文字、进度条，以及完成后才显示的重置按钮。
             attr {
                 backgroundColor(Color.WHITE)
                 flexDirectionColumn() // 把页面中的组件从上往下排列。
@@ -120,7 +128,27 @@ internal class HelloWorldPage : Pager() {
                 }
             }
 
-            // 第四部分：达到目标才显示整个重置按钮，与颜色、文字共用 isCompleted 判断。
+            // 第四部分：灰色底条表示总目标，里面的彩色填充表示已完成的比例。
+            View {
+                attr {
+                    width(page.progressBarWidth)
+                    height(12f)
+                    flexDirectionRow() // 内部填充从左侧开始排列，不设置 allCenter()。
+                    backgroundColor(Color.GRAY)
+                    marginTop(12f)
+                }
+
+                View {
+                    attr {
+                        // 在 attr 中读取 progress，getter 会读取 clickCount，宽度随点击次数更新。
+                        width(page.progressBarWidth * page.progress)
+                        height(12f)
+                        backgroundColor(if (page.isCompleted) Color.GREEN else Color.BLUE)
+                    }
+                }
+            }
+
+            // 第五部分：达到目标才显示整个重置按钮，与颜色、文字共用 isCompleted 判断。
             // vif 的第一个代码块提供判断条件，第二个代码块负责创建按钮。
             // 在条件块中读取计算属性；它的 getter 会读取 observable 状态，次数变化时会重新判断。
             vif({ page.isCompleted }) {
