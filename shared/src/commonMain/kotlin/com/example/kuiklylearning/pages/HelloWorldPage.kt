@@ -20,12 +20,12 @@ internal class HelloWorldPage : Pager() {
         clickCount += 1
     }
 
-    // 函数定义：把次数直接设为 0。计数文字会跟随状态更新。
+    // 函数定义：把次数直接设为 0。计数文字、完成提示和卡片颜色会跟随状态更新。
     private fun resetCount() {
         clickCount = 0
     }
 
-    // 本节：在点击事件中调用函数，分别完成计数和重置。
+    // 本节：点击事件调用函数；attr 根据次数更新卡片颜色和完成提示。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
@@ -46,7 +46,7 @@ internal class HelloWorldPage : Pager() {
                 }
             }
 
-            // 第二个组件：灰色昵称卡片，内部的两个 Text 仍然左右排列。
+            // 第二个组件：昵称卡片，达到 5 次变绿，内部的两个 Text 仍然左右排列。
             View {
                 // 这里的 attr 设置昵称容器，不会改变外层页面的排列方向。
                 attr {
@@ -55,9 +55,10 @@ internal class HelloWorldPage : Pager() {
                     flexDirectionRow() // 横排：主轴是水平方向，交叉轴是竖直方向。
                     justifyContentCenter() // 主轴居中：两个 Text 连同中间的间距作为一整组水平居中。
                     alignItemsCenter() // 交叉轴居中：每个 Text 在竖直方向居中对齐。
-                    backgroundColor(Color.GRAY) // 灰色背景覆盖容器内部，包括 padding 区域。
+                    // 达到 5 次变绿；重置为 0 后恢复灰色。
+                    backgroundColor(if (page.clickCount >= 5) Color.GREEN else Color.GRAY)
                     padding(16f) // 在指定宽高内部四周各留 16f，内容可用区域为 248 × 68。
-                    marginTop(24f) // 外边距：容器与上方欢迎语的间距，不属于灰色背景。
+                    marginTop(24f) // 外边距：容器与上方欢迎语的间距，不属于卡片背景。
                 }
 
                 // event 与 attr 并列：attr 设置组件属性，event 登记事件发生后要执行的代码。
@@ -90,7 +91,13 @@ internal class HelloWorldPage : Pager() {
             Text {
                 attr {
                     // 在 attr 内读取状态，Kuikly 才能跟踪这个属性块对状态的依赖。
-                    text("已点击卡片 ${page.clickCount} 次")
+                    text(
+                        if (page.clickCount >= 5) {
+                            "练习完成！已点击 ${page.clickCount} 次"
+                        } else {
+                            "已点击卡片 ${page.clickCount} 次"
+                        }
+                    )
                     fontSize(18f)
                     color(Color.BLACK)
                     marginTop(16f) // 计数文字与上方昵称容器的间距。
