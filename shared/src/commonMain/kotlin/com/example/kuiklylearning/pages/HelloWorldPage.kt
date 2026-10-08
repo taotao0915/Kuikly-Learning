@@ -1,6 +1,7 @@
 package com.example.kuiklylearning.pages
 
 import com.tencent.kuikly.core.annotations.Page
+import com.tencent.kuikly.core.base.Animation
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
 import com.tencent.kuikly.core.directives.vif
@@ -49,7 +50,7 @@ internal class HelloWorldPage : Pager() {
         clickCount = 0
     }
 
-    // 本节：用 Float 计算完成比例，在 attr 中让进度条宽度响应次数变化。
+    // 本节：给进度条绑定声明式动画；状态决定目标效果，Animation 决定变化过程。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
@@ -140,10 +141,15 @@ internal class HelloWorldPage : Pager() {
 
                 View {
                     attr {
-                        // 在 attr 中读取 progress，getter 会读取 clickCount，宽度随点击次数更新。
+                        // 状态决定最终宽度；animate 决定旧效果如何过渡到新效果。
                         width(page.progressBarWidth * page.progress)
                         height(12f)
                         backgroundColor(if (page.isCompleted) Color.GREEN else Color.BLUE)
+
+                        // 将动画关联到响应式状态 clickCount，次数变化时对填充块应用动画。
+                        // easeOut：先快后慢；0.3f 的单位是秒。放在属性设置后，让宽度和背景色平滑变化。
+                        // 计数本身立即更新；重置为 0 时，填充也会逐渐缩回去。
+                        animate(Animation.easeOut(0.3f), page.clickCount)
                     }
                 }
             }
