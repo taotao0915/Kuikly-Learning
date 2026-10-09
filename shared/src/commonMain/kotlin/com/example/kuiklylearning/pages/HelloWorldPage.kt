@@ -45,17 +45,17 @@ internal class HelloWorldPage : Pager() {
         clickCount += 1
     }
 
-    // 函数定义：把次数直接设为 0。计数文字、卡片颜色、进度条和按钮会跟随状态更新。
+    // 函数定义：把次数直接设为 0。文字、卡片、进度条、步骤圆点和按钮会跟随状态更新。
     private fun resetCount() {
         clickCount = 0
     }
 
-    // 本节：给进度条绑定声明式动画；状态决定目标效果，Animation 决定变化过程。
+    // 本节：用 for 循环创建多个步骤圆点，让每个圆点的 attr 响应点击次数。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
         return {
-            // 页面包含欢迎语、昵称卡片、计数文字、进度条，以及完成后才显示的重置按钮。
+            // 页面包含欢迎语、昵称卡片、计数文字、进度条、步骤圆点，以及完成后才显示的重置按钮。
             attr {
                 backgroundColor(Color.WHITE)
                 flexDirectionColumn() // 把页面中的组件从上往下排列。
@@ -154,7 +154,33 @@ internal class HelloWorldPage : Pager() {
                 }
             }
 
-            // 第五部分：达到目标才显示整个重置按钮，与颜色、文字共用 isCompleted 判断。
+            // 第五部分：用普通 for 循环创建固定数量的步骤圆点。
+            View {
+                attr {
+                    width(page.progressBarWidth)
+                    height(28f)
+                    flexDirectionRow() // 圆点从左到右排列。
+                    allCenter() // 让整排圆点在这个容器内居中。
+                    marginTop(8f)
+                }
+
+                // 1..targetCount 包含起点和终点；目标为 5 时，step 依次是 1、2、3、4、5。
+                // targetCount 在运行期间固定，所以创建时循环一次即可；每轮创建一个独立的 Text。
+                for (step in 1..page.targetCount) {
+                    Text {
+                        attr {
+                            text("●") // 用一个圆点字符表示一步。
+                            fontSize(22f)
+                            // 各圆点保留自己的 step；这里读取响应式状态，点击后会重新判断颜色。
+                            color(if (page.clickCount >= step) Color.GREEN else Color.GRAY)
+                            // 第一个圆点左边不留间距，其余圆点与前一个相隔 8f。
+                            marginLeft(if (step == 1) 0f else 8f)
+                        }
+                    }
+                }
+            }
+
+            // 第六部分：达到目标才显示整个重置按钮，与颜色、文字共用 isCompleted 判断。
             // vif 的第一个代码块提供判断条件，第二个代码块负责创建按钮。
             // 在条件块中读取计算属性；它的 getter 会读取 observable 状态，次数变化时会重新判断。
             vif({ page.isCompleted }) {
