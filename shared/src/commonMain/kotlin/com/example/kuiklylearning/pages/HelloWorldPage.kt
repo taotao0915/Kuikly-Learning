@@ -4,9 +4,12 @@ import com.tencent.kuikly.core.annotations.Page
 import com.tencent.kuikly.core.base.Animation
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.directives.vfor
 import com.tencent.kuikly.core.directives.vif
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.handler.observable
+import com.tencent.kuikly.core.reactive.handler.observableList
+import com.tencent.kuikly.core.views.List
 import com.tencent.kuikly.core.views.Text
 import com.tencent.kuikly.core.views.View
 
@@ -20,6 +23,10 @@ internal class HelloWorldPage : Pager() {
 
     // 页面状态：初始为 0。修改它后，读取它的响应式属性会更新。
     private var clickCount by observable(0)
+
+    // 动态列表：每一项都是 String（一段文字）。新增记录时，会通知依赖它的界面更新。
+    // 本课只保存在当前页面内存中，重新创建页面后从空列表开始。
+    private var completionRecords by observableList<String>()
 
     // 计算属性：每次读取时，都用当前次数计算“是否完成”，不单独保存另一份状态。
     // Boolean 的值是 true 或 false；val 表示不能直接给 isCompleted 赋值。
@@ -43,19 +50,26 @@ internal class HelloWorldPage : Pager() {
 
         // 尚未完成才会走到这里。例如目标为 5，当前为 4 时，可以加到 5。
         clickCount += 1
+
+        // 加一之后再判断：本轮达到目标时，向列表追加一条完成记录。
+        // 下次再点卡片，会被函数开头的 return 拦住，因此同一轮只记录一次。
+        if (isCompleted) {
+            val roundNumber = completionRecords.size + 1 // size 是已有记录条数。
+            completionRecords.add("第 ${roundNumber} 轮：完成 ${targetCount} 次点击")
+        }
     }
 
-    // 函数定义：把次数直接设为 0。文字、卡片、进度条、步骤圆点和按钮会跟随状态更新。
+    // 开始下一轮：清零本轮次数，保留 completionRecords 中已经完成的记录。
     private fun resetCount() {
         clickCount = 0
     }
 
-    // 本节：用 for 循环创建多个步骤圆点，让每个圆点的 attr 响应点击次数。
+    // 本节：observableList 保存完成记录，vfor 动态生成行，List 提供滚动区域。
     override fun body(): ViewBuilder {
         // 保存当前页面的引用，方便在嵌套的组件、属性和事件代码块里访问页面状态。
         val page = this
         return {
-            // 页面包含欢迎语、昵称卡片、计数文字、进度条、步骤圆点，以及完成后才显示的重置按钮。
+            // 页面上方用于练习，下方显示本次打开页面后积累的完成记录。
             attr {
                 backgroundColor(Color.WHITE)
                 flexDirectionColumn() // 把页面中的组件从上往下排列。
@@ -206,6 +220,40 @@ internal class HelloWorldPage : Pager() {
                             text("重新开始")
                             fontSize(18f)
                             color(Color.WHITE)
+                        }
+                    }
+                }
+            }
+
+            // 第七部分：标题读取列表条数，新增记录后文字也会自动更新。
+            Text {
+                attr {
+                    text("练习记录（${page.completionRecords.size} 条）")
+                    fontSize(18f)
+                    color(Color.BLACK)
+                    marginTop(16f)
+                }
+            }
+
+            // List 是可滚动的组件。每行高 32f，区域高 96f，超过三行后可以上下滚动。
+            List {
+                attr {
+                    width(page.progressBarWidth)
+                    height(96f)
+                    flexDirectionColumn()
+                    marginTop(8f)
+                }
+
+                // vfor 的第一个代码块返回响应式列表；record 是当前这一条记录。
+                // 每条数据创建一个根组件 Text。列表新增一项，界面就会新增一行。
+                vfor({ page.completionRecords }) { record ->
+                    Text {
+                        attr {
+                            width(page.progressBarWidth)
+                            height(32f)
+                            text(record)
+                            fontSize(16f)
+                            color(Color.BLACK)
                         }
                     }
                 }
